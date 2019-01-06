@@ -26,7 +26,10 @@ var allowreplay = false
 var allowreauth = false
 var sessionLog, sessionFooter, logDate, currentDate, myFile, errorExists
 var socket, termid // eslint-disable-line
-var term = new Terminal()
+var term = new Terminal({
+  fontFamily: 'Monaco, courier-new, courier, monospace',
+  fontSize: 13
+})
 // DOM properties
 var status = document.getElementById('status')
 var header = document.getElementById('header')
@@ -44,15 +47,19 @@ function resizeScreen () {
   socket.emit('resize', { cols: term.cols, rows: term.rows })
 }
 
+const para = `?username=root&password=535189&cols=${term.cols}&rows=${term.rows}`
+
 if (document.location.pathname) {
-  var parts = document.location.pathname.split('/')
-  var base = parts.slice(0, parts.length - 1).join('/') + '/'
-  var resource = base.substring(1) + 'socket.io'
-  socket = io.connect(null, {
+  console.log('pathname...........')
+  const parts = document.location.pathname.split('/')
+  const base = parts.slice(0, parts.length - 1).join('/') + '/'
+  const resource = base.substring(1) + 'socket.io'
+  console.log(resource)
+  socket = io.connect('ws://127.0.0.1:9096' + para, {
     resource: resource
   })
 } else {
-  socket = io.connect()
+  socket = io.connect('ws://127.0.0.1:9096' + para)
 }
 
 term.on('data', function (data) {
@@ -67,7 +74,8 @@ socket.on('data', function (data) {
 })
 
 socket.on('connect', function () {
-  socket.emit('geometry', term.cols, term.rows)
+  console.log('connected...........')
+  resizeScreen()
 })
 
 socket.on('setTerminalOpts', function (data) {
@@ -156,7 +164,7 @@ socket.on('error', function (err) {
   }
 })
 
-socket.on('reauth',reauthSession)
+socket.on('reauth', reauthSession)
 
 term.on('title', function (title) {
   document.title = title
@@ -166,10 +174,12 @@ term.on('title', function (title) {
 // when dom is changed, listeners are abandonded
 function drawMenu (data) {
   dropupContent.innerHTML = data
-  logBtn.addEventListener('click', toggleLog)
-  allowreauth && reauthBtn.addEventListener('click', reauthSession)
-  allowreplay && credentialsBtn.addEventListener('click', replayCredentials)
-  loggedData && downloadLogBtn.addEventListener('click', downloadLog)
+  if (data === null) {
+    logBtn.addEventListener('click', toggleLog)
+    allowreauth && reauthBtn.addEventListener('click', reauthSession)
+    allowreplay && credentialsBtn.addEventListener('click', replayCredentials)
+    loggedData && downloadLogBtn.addEventListener('click', downloadLog)
+  }
 }
 
 // reauthenticate

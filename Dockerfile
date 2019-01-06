@@ -1,4 +1,4 @@
-FROM node:8.6
+FROM node:8.12
 
 WORKDIR /usr/src
 COPY . /usr/src
